@@ -25,5 +25,5 @@ void main()
     else 
         baseColor = uBaseColorFactor;
         
-    FragColor = vec4(baseColor.rgb, baseColor.a * uBaseColorFactor.a);
+    FragColor = baseColor;
 }

@@ -7,9 +7,9 @@ out vec4 FragColor;
 in vec3 UV0;
 in vec3 WorldPos;
 
-uniform samplerCube uBaseColorMap;
+uniform samplerCube uAlbedo;
 
 void main()
 {
-    FragColor = texture(uBaseColorMap, UV0);
+    FragColor = texture(uAlbedo, UV0);
 }
