@@ -1,0 +1,53 @@
+{
+ "title": "This is the demo project",
+ "description": "This is a example of a project",
+ "base_path" : "D:\\gotoviar\\webxr_app\\demo_project\\",
+ "fileVersion": 1,
+ "majorVersion": 1,
+ "minorVersion": 0,
+ "patchVersion": 0,
+ "author": "GoToViar Team",
+ "license": "free",
+  
+ "resources":
+ [
+    {
+        "type": "glb",
+        "path": "path to resources",
+        "name": "main_scene"
+    },
+    {
+        "image": "path to resources",
+        "name":"arhitectors"
+    },
+    {
+        "image": "path to resources",
+        "name":"cars"
+    },
+    {
+        "video": "path to resources",
+        "name":"360 video"
+    },
+    {
+        "audio": "path to resources",
+        "name":"360 video"
+    }
+ ],
+ 
+ "menu":
+{
+    "version": "1.0",
+    "items":
+    [
+        {
+            "name":"admin",
+            "path":"path to resource"
+        },
+        {
+            "name":"guest",
+            "path":"path to resource"
+        }
+    ]
+}
+ 
+}
