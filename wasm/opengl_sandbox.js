@@ -1238,7 +1238,7 @@ function updateGlobalBufferAndViews(buf) {
 var TOTAL_STACK = 5242880;
 if (Module['TOTAL_STACK']) assert(TOTAL_STACK === Module['TOTAL_STACK'], 'the stack size can no longer be determined at runtime')
 
-var INITIAL_MEMORY = Module['INITIAL_MEMORY'] || 536870912;
+var INITIAL_MEMORY = Module['INITIAL_MEMORY'] || 268435456;
 if (!Object.getOwnPropertyDescriptor(Module, 'INITIAL_MEMORY')) {
   Object.defineProperty(Module, 'INITIAL_MEMORY', {
     configurable: true,
@@ -1256,7 +1256,7 @@ assert(typeof Int32Array !== 'undefined' && typeof Float64Array !== 'undefined' 
 
 // If memory is defined in wasm, the user can't provide it.
 assert(!Module['wasmMemory'], 'Use of `wasmMemory` detected.  Use -s IMPORTED_MEMORY to define wasmMemory externally');
-assert(INITIAL_MEMORY == 536870912, 'Detected runtime INITIAL_MEMORY setting.  Use -s IMPORTED_MEMORY to define wasmMemory dynamically');
+assert(INITIAL_MEMORY == 268435456, 'Detected runtime INITIAL_MEMORY setting.  Use -s IMPORTED_MEMORY to define wasmMemory dynamically');
 
 // include: runtime_init_table.js
 // In regular non-RELOCATABLE mode the table is exported
@@ -1637,7 +1637,7 @@ function createWasm() {
     // This assertion doesn't hold when emscripten is run in --post-link
     // mode.
     // TODO(sbc): Read INITIAL_MEMORY out of the wasm file in post-link mode.
-    //assert(wasmMemory.buffer.byteLength === 536870912);
+    //assert(wasmMemory.buffer.byteLength === 268435456);
     updateGlobalBufferAndViews(wasmMemory.buffer);
 
     wasmTable = Module['asm']['__indirect_function_table'];
@@ -1766,34 +1766,8 @@ var ASM_CONSTS = {
       return ret;
     }
   function demangle(func) {
-      // If demangle has failed before, stop demangling any further function names
-      // This avoids an infinite recursion with malloc()->abort()->stackTrace()->demangle()->malloc()->...
-      demangle.recursionGuard = (demangle.recursionGuard|0)+1;
-      if (demangle.recursionGuard > 1) return func;
-      var __cxa_demangle_func = Module['___cxa_demangle'] || Module['__cxa_demangle'];
-      assert(__cxa_demangle_func);
-      return withStackSave(function() {
-        try {
-          var s = func;
-          if (s.startsWith('__Z'))
-            s = s.substr(1);
-          var len = lengthBytesUTF8(s)+1;
-          var buf = stackAlloc(len);
-          stringToUTF8(s, buf, len);
-          var status = stackAlloc(4);
-          var ret = __cxa_demangle_func(buf, 0, 0, status);
-          if (HEAP32[((status)>>2)] === 0 && ret) {
-            return UTF8ToString(ret);
-          }
-          // otherwise, libcxxabi failed
-        } catch(e) {
-        } finally {
-          _free(ret);
-          if (demangle.recursionGuard < 2) --demangle.recursionGuard;
-        }
-        // failure when using libcxxabi, don't demangle
-        return func;
-      });
+      warnOnce('warning: build with  -s DEMANGLE_SUPPORT=1  to link in libcxxabi demangling');
+      return func;
     }
 
   function demangleAll(text) {
@@ -1855,10 +1829,6 @@ var ASM_CONSTS = {
       var js = jsStackTrace();
       if (Module['extraStackTrace']) js += '\n' + Module['extraStackTrace']();
       return demangleAll(js);
-    }
-
-  function ___assert_fail(condition, filename, line, func) {
-      abort('Assertion failed: ' + UTF8ToString(condition) + ', at: ' + [filename ? UTF8ToString(filename) : 'unknown filename', line, func ? UTF8ToString(func) : 'unknown function']);
     }
 
   function ___cxa_allocate_exception(size) {
@@ -4787,7 +4757,7 @@ var ASM_CONSTS = {
         }
         return id;
       },instrumentWasmImports:function(imports) {
-        var ASYNCIFY_IMPORTS = ["env.emscripten_async_wget2_data","env.invoke_*","env.emscripten_sleep","env.emscripten_wget","env.emscripten_wget_data","env.emscripten_idb_load","env.emscripten_idb_store","env.emscripten_idb_delete","env.emscripten_idb_exists","env.emscripten_idb_load_blob","env.emscripten_idb_store_blob","env.SDL_Delay","env.emscripten_scan_registers","env.emscripten_lazy_load_code","env.emscripten_fiber_swap","wasi_snapshot_preview1.fd_sync","env.__wasi_fd_sync","env._emval_await","env._dlopen_js","env.__asyncjs__*"].map((x) => x.split('.')[1]);
+        var ASYNCIFY_IMPORTS = ["env.invoke_*","env.emscripten_sleep","env.emscripten_wget","env.emscripten_wget_data","env.emscripten_idb_load","env.emscripten_idb_store","env.emscripten_idb_delete","env.emscripten_idb_exists","env.emscripten_idb_load_blob","env.emscripten_idb_store_blob","env.SDL_Delay","env.emscripten_scan_registers","env.emscripten_lazy_load_code","env.emscripten_fiber_swap","wasi_snapshot_preview1.fd_sync","env.__wasi_fd_sync","env._emval_await","env._dlopen_js","env.__asyncjs__*"].map((x) => x.split('.')[1]);
         for (var x in imports) {
           (function(x) {
             var original = imports[x];
@@ -7149,8 +7119,6 @@ var ASM_CONSTS = {
       }
     }
 
-  function _glCheckFramebufferStatus(x0) { return GLctx['checkFramebufferStatus'](x0) }
-
   function _glClear(x0) { GLctx['clear'](x0) }
 
   function _glClearColor(x0, x1, x2, x3) { GLctx['clearColor'](x0, x1, x2, x3) }
@@ -7318,12 +7286,6 @@ var ASM_CONSTS = {
 
   function _glGetAttribLocation(program, name) {
       return GLctx.getAttribLocation(GL.programs[program], UTF8ToString(name));
-    }
-
-  function _glGetError() {
-      var error = GLctx.getError() || GL.lastError;
-      GL.lastError = 0/*GL_NO_ERROR*/;
-      return error;
     }
 
   function readI53FromI64(ptr) {
@@ -9351,7 +9313,6 @@ function intArrayToString(array) {
 
 
 var asmLibraryArg = {
-  "__assert_fail": ___assert_fail,
   "__cxa_allocate_exception": ___cxa_allocate_exception,
   "__cxa_throw": ___cxa_throw,
   "__syscall_fcntl64": ___syscall_fcntl64,
@@ -9407,7 +9368,6 @@ var asmLibraryArg = {
   "glBlendFunc": _glBlendFunc,
   "glBlendFuncSeparate": _glBlendFuncSeparate,
   "glBufferData": _glBufferData,
-  "glCheckFramebufferStatus": _glCheckFramebufferStatus,
   "glClear": _glClear,
   "glClearColor": _glClearColor,
   "glCompileShader": _glCompileShader,
@@ -9433,7 +9393,6 @@ var asmLibraryArg = {
   "glGenVertexArrays": _glGenVertexArrays,
   "glGenerateMipmap": _glGenerateMipmap,
   "glGetAttribLocation": _glGetAttribLocation,
-  "glGetError": _glGetError,
   "glGetIntegerv": _glGetIntegerv,
   "glGetProgramInfoLog": _glGetProgramInfoLog,
   "glGetProgramiv": _glGetProgramiv,
@@ -9536,13 +9495,7 @@ var stackRestore = Module["stackRestore"] = createExportWrapper("stackRestore");
 var stackAlloc = Module["stackAlloc"] = createExportWrapper("stackAlloc");
 
 /** @type {function(...*):?} */
-var ___cxa_demangle = Module["___cxa_demangle"] = createExportWrapper("__cxa_demangle");
-
-/** @type {function(...*):?} */
 var dynCall_vi = Module["dynCall_vi"] = createExportWrapper("dynCall_vi");
-
-/** @type {function(...*):?} */
-var dynCall_ii = Module["dynCall_ii"] = createExportWrapper("dynCall_ii");
 
 /** @type {function(...*):?} */
 var dynCall_viiiii = Module["dynCall_viiiii"] = createExportWrapper("dynCall_viiiii");
@@ -9552,6 +9505,9 @@ var dynCall_vidd = Module["dynCall_vidd"] = createExportWrapper("dynCall_vidd");
 
 /** @type {function(...*):?} */
 var dynCall_viiii = Module["dynCall_viiii"] = createExportWrapper("dynCall_viiii");
+
+/** @type {function(...*):?} */
+var dynCall_ii = Module["dynCall_ii"] = createExportWrapper("dynCall_ii");
 
 /** @type {function(...*):?} */
 var dynCall_vid = Module["dynCall_vid"] = createExportWrapper("dynCall_vid");
@@ -9566,28 +9522,25 @@ var dynCall_viii = Module["dynCall_viii"] = createExportWrapper("dynCall_viii");
 var dynCall_iiiiiiii = Module["dynCall_iiiiiiii"] = createExportWrapper("dynCall_iiiiiiii");
 
 /** @type {function(...*):?} */
-var dynCall_v = Module["dynCall_v"] = createExportWrapper("dynCall_v");
-
-/** @type {function(...*):?} */
 var dynCall_viif = Module["dynCall_viif"] = createExportWrapper("dynCall_viif");
 
 /** @type {function(...*):?} */
+var dynCall_v = Module["dynCall_v"] = createExportWrapper("dynCall_v");
+
+/** @type {function(...*):?} */
 var dynCall_iiiii = Module["dynCall_iiiii"] = createExportWrapper("dynCall_iiiii");
-
-/** @type {function(...*):?} */
-var dynCall_fff = Module["dynCall_fff"] = createExportWrapper("dynCall_fff");
-
-/** @type {function(...*):?} */
-var dynCall_iii = Module["dynCall_iii"] = createExportWrapper("dynCall_iii");
-
-/** @type {function(...*):?} */
-var dynCall_iiiiiiiiii = Module["dynCall_iiiiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiii");
 
 /** @type {function(...*):?} */
 var dynCall_iiiiii = Module["dynCall_iiiiii"] = createExportWrapper("dynCall_iiiiii");
 
 /** @type {function(...*):?} */
 var dynCall_viiiiii = Module["dynCall_viiiiii"] = createExportWrapper("dynCall_viiiiii");
+
+/** @type {function(...*):?} */
+var dynCall_iiiiiiiiii = Module["dynCall_iiiiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiii");
+
+/** @type {function(...*):?} */
+var dynCall_iii = Module["dynCall_iii"] = createExportWrapper("dynCall_iii");
 
 /** @type {function(...*):?} */
 var dynCall_iiiiiii = Module["dynCall_iiiiiii"] = createExportWrapper("dynCall_iiiiiii");
