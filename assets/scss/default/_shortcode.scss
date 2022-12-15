@@ -153,6 +153,9 @@ font-family: 'Poppins', sans-serif;
     @extend %bgImagePosition;
 }
 
+.bg_image_gtvr {
+    background-image: url(/assets/images/bg/bg.jpg) !important;
+}
 
 @for $i from 1 through 35 {
     .bg_image--#{$i} {
