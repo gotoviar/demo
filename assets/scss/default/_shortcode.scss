@@ -154,7 +154,8 @@ font-family: 'Poppins', sans-serif;
 }
 
 .bg_image_gtvr {
-    background-image: url(/assets/images/bg/bg.jpg) !important;
+    background: url(/assets/images/bg/bg.jpg) no-repeat center center fixed;
+    background-size: cover;
 }
 
 @for $i from 1 through 35 {
